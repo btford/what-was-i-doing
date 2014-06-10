@@ -3,19 +3,22 @@
 var fs        = require('fs');
 var exec      = require('child_process').exec;
 var joinPath  = require('path').join;
+var resolvePath  = require('path').resolve;
+var relativePath  = require('path').relative;
 var async     = require('async');
 var columnify = require('columnify')
 
 var log = console.log.bind(console);
-
 var cwd = process.cwd();
+
+var paths = process.argv.length > 2 ?
+    process.argv.slice(2) :
+    fs.readdirSync(cwd);
 
 var gitStatus = curryExec('git status --short');
 
-var files = fs.readdirSync(cwd).
-    map(joinWithCwd).
-    filter(isDirectory).
-    filter(isGitDirectory);
+var files = paths.filter(isDirectory).
+                  filter(isGitDirectory);
 
 var UNSTAGED = /^\?\? /,
     MODIFIED = /^(M|D|A) /;
@@ -39,17 +42,16 @@ async.map(files, function (file, cb) {
           return sum + 0.5 * UNSTAGED.test(line)
                      + MODIFIED.test(line);
         }, 0);
-    file.file = file.file.substr(cwd.length + 1);
+    file.file = relativePath(cwd, file.file);
     return file;
   }).
   sort(function (a, b) {
     return b.changes - a.changes;
   });
 
-  var columns = columnify(files, {
+  console.log(files.length > 0 ? columnify(files, {
     columns: ['file', 'changes']
-  });
-  console.log(columns);
+  }) : 'i got nothin');
 });
 
 function curryExec (cmd) {
