@@ -1,6 +1,6 @@
 {
   "name": "what-was-i-doing",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "CLI to inspect a directory full of git repos",
   "main": "bin.js",
   "directories": {
